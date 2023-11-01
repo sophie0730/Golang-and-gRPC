@@ -39,7 +39,7 @@ func CORSMiddleware() gin.HandlerFunc {
 
 func main() {
 	//開啟端口
-	listen, _ := net.Listen("tcp" ,":80")
+	listen, _ := net.Listen("tcp" ,":3000")
     //創建grpc服務
 	grpcServer := grpc.NewServer()
     //在grpc服務端去註冊我們自己編寫的服務
@@ -56,11 +56,11 @@ func main() {
 
 
 	r := gin.Default();
-	r.POST("/method2_response", func (c *gin.Context)  {
+	r.GET("/method2_response", func (c *gin.Context)  {
 		c.JSON(200, gin.H {
 			"response": "method 2: hello",
 		})
 	})
 
-	r.Run(":80");
+	r.Run(":3000");
 }

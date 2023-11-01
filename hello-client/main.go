@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	pb "grpc/hello-server/proto"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
@@ -68,55 +68,113 @@ func main() {
 		})
 	})
 
-	r.GET("/method2_request", func (c *gin.Context) {
-      var responses []string;
-	  var wg sync.WaitGroup
-	  responseCh := make(chan string)
+	// r.GET("/method2_request", func (c *gin.Context) {
+    //   var responses []string;
+	//   var wg sync.WaitGroup
+	//   responseCh := make(chan string)
 
-	  for i := 0; i < 10; i++ {
-		wg.Add(1) //increment the waitgroup counter
-		go func ()  {
-			defer wg.Done()
-			resp, err := http.Post("http://3.105.180.131:3000/method2_response", "application/json", nil);
-			if err != nil {
-			  c.JSON(500, err)
-			  return
-			}
+	//   for i := 0; i < 10; i++ {
+	// 	wg.Add(1) //increment the waitgroup counter
+	// 	go func ()  {
+	// 		defer wg.Done()
+	// 		resp, err := http.Post("http://3.105.180.131:3000/method2_response", "application/json", nil);
+	// 		if err != nil {
+	// 		  c.JSON(500, err)
+	// 		  return
+	// 		}
 
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-			  c.JSON(500, err)
-			  return
-			}
-			responseCh <- string(body)
-			defer resp.Body.Close();
-
-
-		}()
-	  }
-
-	  go func() {
-		wg.Wait()
-		close(responseCh)
-	  }()
+	// 		body, err := ioutil.ReadAll(resp.Body)
+	// 		if err != nil {
+	// 		  c.JSON(500, err)
+	// 		  return
+	// 		}
+	// 		responseCh <- string(body)
+	// 		defer resp.Body.Close();
 
 
-	  for i := 0; i < 10; i++ {
-		response := <- responseCh
-		// if  response != "" {
-		// 	c.JSON(500, response)
-		// 	return
-		// }
-		responses = append(responses, response)
-	  }
+	// 	}()
+	//   }
 
-	  c.JSON(200, gin.H {
-		"FIRST": "Send request successfully",
-		"SECOND": responses,
-	  })
-	})
+	//   go func() {
+	// 	wg.Wait()
+	// 	close(responseCh)
+	//   }()
+
+
+	//   for i := 0; i < 10; i++ {
+	// 	response := <- responseCh
+	// 	// if  response != "" {
+	// 	// 	c.JSON(500, response)
+	// 	// 	return
+	// 	// }
+	// 	responses = append(responses, response)
+	//   }
+
+	//   c.JSON(200, gin.H {
+	// 	"FIRST": "Send request successfully",
+	// 	"SECOND": responses,
+	//   })
+	// })
+	r.GET("/method2_request", func(c *gin.Context) {
+        var wg sync.WaitGroup
+        var mu sync.Mutex
+
+        // 创建一个通道来收集 JSON 响应
+        jsonResponseCh := make(chan map[string]interface{}, 10)
+
+        for i := 0; i < 10; i++ {
+            wg.Add(1)
+
+            go func() {
+                defer wg.Done()
+
+                res, err := http.Post("http://3.105.180.131:3000/method2_response", "application/json", nil)
+                if err != nil {
+                    c.JSON(500, gin.H{
+                        "error": err.Error(),
+                    })
+                    return
+                }
+
+                defer res.Body.Close()
+
+                var jsonResponse map[string]interface{}
+                decoder := json.NewDecoder(res.Body)
+
+                if err := decoder.Decode(&jsonResponse); err != nil {
+                    c.JSON(500, gin.H{
+                        "error": err.Error(),
+                    })
+                    return
+                }
+
+                // 使用互斥锁以确保安全地向通道发送响应
+                mu.Lock()
+                jsonResponseCh <- jsonResponse
+
+                // 如果已经收集了足够的响应，关闭通道
+                if len(jsonResponseCh) == 10 {
+                    close(jsonResponseCh)
+                }
+                mu.Unlock()
+            }()
+        }
+
+        // 等待所有请求完成
+        wg.Wait()
+
+        // 从通道中获取所有 JSON 响应
+        var allJSONResponses []map[string]interface{}
+        for jsonResponse := range jsonResponseCh {
+            allJSONResponses = append(allJSONResponses, jsonResponse)
+        }
+
+        // 返回所有 JSON 响应
+        c.JSON(200, allJSONResponses)
+    })
+
+
 
 	r.Use(CORSMiddleware())
-
 	r.Run(":5000")
 }

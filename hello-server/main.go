@@ -39,7 +39,7 @@ func CORSMiddleware() gin.HandlerFunc {
 
 func main() {
 	//開啟端口
-	listen, _ := net.Listen("tcp" ,":9090")
+	listen, _ := net.Listen("tcp" ,":80")
     //創建grpc服務
 	grpcServer := grpc.NewServer()
     //在grpc服務端去註冊我們自己編寫的服務

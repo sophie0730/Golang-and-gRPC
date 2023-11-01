@@ -56,7 +56,12 @@ func main() {
 
 
 	r := gin.Default();
-	r.GET("/method2_response", func (c *gin.Context)  {
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H {
+			"response": "hi",
+		})
+	})
+	r.POST("/method2_response", func (c *gin.Context)  {
 		c.JSON(200, gin.H {
 			"response": "method 2: hello",
 		})

@@ -5,7 +5,7 @@ app.use(express.json());
 app.get("/method3", async (req, res) => {
     const arr = [];
     for (let i = 0; i < 10; i++) {
-        const request = await fetch("http://127.0.0.1:5000/method2_response", {
+        const request = await fetch("http://3.105.180.131/method2_response", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -25,6 +25,6 @@ app.get("/method3", async (req, res) => {
 })
 
 
-app.listen(8080, () => {
-    console.log("port is opened at 8080")
+app.listen(80, () => {
+    console.log("port is opened at 80")
 })

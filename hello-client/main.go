@@ -33,7 +33,7 @@ func CORSMiddleware() gin.HandlerFunc {
 func main() {
     r := gin.Default()
 	r.GET("/method1", func (c *gin.Context)  {
-		conn, err := grpc.Dial("http://3.105.180.131", grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial("http://3.105.180.131:9090", grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Fatalf("did not connect: %v", err)
 		}
@@ -77,7 +77,7 @@ func main() {
 		wg.Add(1) //increment the waitgroup counter
 		go func ()  {
 			defer wg.Done()
-			resp, err := http.Post("http://172.31.17.227/method2_response", "application/json", nil);
+			resp, err := http.Post("http://3.105.180.131:3000/method2_response", "application/json", nil);
 			if err != nil {
 			  c.JSON(500, err)
 			  return
@@ -118,5 +118,5 @@ func main() {
 
 	r.Use(CORSMiddleware())
 
-	r.Run(":80")
+	r.Run(":5000")
 }

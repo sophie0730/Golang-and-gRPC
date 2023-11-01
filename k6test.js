@@ -7,7 +7,7 @@ export const options = {
   scenarios: {
     contacts: {
       executor: 'constant-arrival-rate',
-      rate: 100,
+      rate: 150,
       timeUnit: '1s',
       duration: '20s',
       preAllocatedVUs: 50,
@@ -17,7 +17,7 @@ export const options = {
 };
 // test HTTP
 export default function () {
-  const res = http.get('http://3.105.180.131/method3');
+  const res = http.get('http://localhost:5000/method1');
   check(res, { 'status was 200': (r) => r.status == 200 });
   sleep(1);
 }
